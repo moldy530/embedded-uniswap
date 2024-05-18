@@ -1,17 +1,17 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-export const env = createEnv({
+export const serverEnv = createEnv({
   /**
    * Specify your server-side environment variables schema here. This way you can ensure the app
    * isn't built with invalid env vars.
    */
   server: {
     NODE_ENV: z.enum(["development", "test", "production"]),
-    API_KEY: z.string(),
-    ALCHEMY_API_URL: z.string().url(),
-    ALCHEMY_RPC_URL: z.string().url(),
-    ROOT_ORG_ID: z.string().default("3121a8a0-c548-4d14-a313-630c3b739858"),
+    SEPOLIA_API_KEY: z.string(),
+    SEPOLIA_GAS_POLICY_ID: z.string().optional(),
+    OPT_MAINNET_API_KEY: z.string(),
+    OPT_MAINNET_GAS_POLICY_ID: z.string().optional(),
   },
 
   /**
@@ -27,9 +27,9 @@ export const env = createEnv({
    */
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
-    API_KEY: process.env.API_KEY,
-    ALCHEMY_API_URL: process.env.ALCHEMY_API_URL,
-    ALCHEMY_RPC_URL: process.env.ALCHEMY_RPC_URL,
-    ROOT_ORG_ID: process.env.ROOT_ORG_ID,
+    OPT_MAINNET_API_KEY: process.env.OPT_MAINNET_API_KEY,
+    OPT_MAINNET_GAS_POLICY_ID: process.env.OPT_MAINNET_GAS_POLICY_ID,
+    SEPOLIA_API_KEY: process.env.SEPOLIA_API_KEY,
+    SEPOLIA_GAS_POLICY_ID: process.env.SEPOLIA_GAS_POLICY_ID,
   },
 });

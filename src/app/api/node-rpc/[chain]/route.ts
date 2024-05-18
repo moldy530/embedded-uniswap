@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 
-import { env } from "@/env.mjs";
+import { chainConfigs } from "@/config/server";
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  { params }: { params: { chain: string } }
+) {
   const body = await req.json();
 
-  const res = await fetch(env.ALCHEMY_RPC_URL, {
+  const chainCofig = chainConfigs[Number(params.chain)];
+  const res = await fetch(chainCofig.rpcUrl + `/${chainCofig.apiKey}`, {
     method: "POST",
     headers: {
       ...req.headers,

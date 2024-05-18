@@ -4,7 +4,6 @@ import {
   useBundlerClient,
   useExportAccount,
   useLogout,
-  useSigner,
   useSignMessage,
   useSmartAccountClient,
   useUser,
@@ -31,9 +30,8 @@ const iframeCss: React.CSSProperties = {
 
 export const UserCard = () => {
   const bundlerClient = useBundlerClient();
-  const signer = useSigner();
   const { client, isLoadingClient } = useSmartAccountClient({
-    type: "MultiOwnerModularAccount",
+    type: "LightAccount",
   });
   const user = useUser();
   const [isValid, setIsValid] = useState<boolean | undefined>(undefined);

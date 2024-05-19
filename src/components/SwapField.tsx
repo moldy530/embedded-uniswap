@@ -1,6 +1,7 @@
 import { popularTokens } from "@/constants";
 import { useBalance } from "@/query/useBalance";
-import { useChain } from "@alchemy/aa-alchemy/react";
+import { useTokenHoldings } from "@/query/useTokenBalances";
+import { useAccount, useChain } from "@alchemy/aa-alchemy/react";
 import { NativeCurrency, Token } from "@uniswap/sdk-core";
 import { useCallback } from "react";
 
@@ -22,6 +23,9 @@ export const SwapField = ({
   loading?: boolean;
 }) => {
   const { chain } = useChain({});
+  const { account } = useAccount({
+    type: "LightAccount",
+  });
 
   const updateToken = useCallback(
     (token: Token | NativeCurrency) => {
@@ -33,6 +37,8 @@ export const SwapField = ({
   const { balance } = useBalance({
     token,
   });
+
+  const { tokens } = useTokenHoldings({ account });
 
   return (
     <div className="flex flex-col w-full bg-base-200 rounded-lg p-4 gap-2">
@@ -60,16 +66,43 @@ export const SwapField = ({
           >
             {token.symbol}
           </div>
-          <ul
+          <div
             tabIndex={0}
-            className="p-2 shadow daisy-menu daisy-dropdown-content z-[1] bg-base-100 rounded-box w-52"
+            className="flex flex-col gap-2 daisy-dropdown-content daisy-card daisy-card-compact z-10"
           >
-            {popularTokens[chain.id].map((token) => (
-              <li key={token.symbol}>
-                <a onClick={() => updateToken(token)}>{token.symbol}</a>
-              </li>
-            ))}
-          </ul>
+            <ul className="p-4 shadow daisy-menu daisy-dropdown-content z-[1] bg-base-100 rounded-box w-52 gap-3">
+              <div>
+                <h3>Your Tokens</h3>
+                {tokens?.map((t) => (
+                  <li key={t.symbol}>
+                    <a
+                      onClick={() =>
+                        updateToken(
+                          new Token(
+                            chain.id,
+                            t.contractAddress,
+                            t.decimals ?? 0,
+                            t.symbol,
+                            t.name
+                          )
+                        )
+                      }
+                    >
+                      {t.symbol} ({t.balance ?? "0"})
+                    </a>
+                  </li>
+                ))}
+              </div>
+              <div>
+                <h3>Popular Tokens</h3>
+                {popularTokens[chain.id].map((token) => (
+                  <li key={token.symbol}>
+                    <a onClick={() => updateToken(token)}>{token.symbol}</a>
+                  </li>
+                ))}
+              </div>
+            </ul>
+          </div>
         </div>
       </div>
       <p className="text-sm text-slate-500">

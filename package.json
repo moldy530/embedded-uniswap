@@ -23,6 +23,7 @@
     "@uniswap/smart-order-router": "^3.31.0",
     "@uniswap/universal-router-sdk": "^2.0.5",
     "@uniswap/v3-sdk": "^3.11.2",
+    "alchemy-sdk": "^3.3.1",
     "daisyui": "^4.11.1",
     "next": "14.1.0",
     "patch-package": "^8.0.0",

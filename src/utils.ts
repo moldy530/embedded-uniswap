@@ -10,7 +10,7 @@ export const fromReadableAmount = (
   decimals: number
 ): bigint => {
   const extraDigits = Math.pow(10, countDecimals(amount));
-  const adjustedAmount = BigInt(amount * extraDigits);
+  const adjustedAmount = BigInt(Math.trunc(amount * extraDigits));
 
   return (adjustedAmount * 10n ** BigInt(decimals)) / BigInt(extraDigits);
 };

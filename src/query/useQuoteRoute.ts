@@ -1,5 +1,9 @@
 import { fromReadableAmount } from "@/utils";
-import { useBundlerClient, useChain } from "@alchemy/aa-alchemy/react";
+import {
+  UseSmartAccountClientResult,
+  useBundlerClient,
+  useChain,
+} from "@alchemy/aa-alchemy/react";
 import { Web3Provider } from "@ethersproject/providers";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -12,10 +16,18 @@ import {
 import {
   AlphaRouter,
   SwapOptionsSwapRouter02,
+  SwapRoute,
   SwapType,
 } from "@uniswap/smart-order-router";
 import { useMemo } from "react";
-import { Address, toHex } from "viem";
+import {
+  Address,
+  Hex,
+  encodeFunctionData,
+  erc20Abi,
+  fromHex,
+  toHex,
+} from "viem";
 
 type GetQuoteParams = {
   inToken: Token | NativeCurrency;
@@ -24,7 +36,51 @@ type GetQuoteParams = {
   recipient: Address;
 };
 
-export const useQuoteRoute = () => {
+type UseQuoteRouteProps = {
+  smartAccountClient: UseSmartAccountClientResult["client"];
+};
+
+export const buildUserOperationForRoute = (
+  route: SwapRoute,
+  inToken: Token | NativeCurrency,
+  amount: number
+) => {
+  if (!route.methodParameters) return;
+
+  const rawAmount = fromReadableAmount(amount, inToken.decimals);
+  const approve = inToken.isToken
+    ? {
+        target: inToken.address as Address,
+        data: encodeFunctionData({
+          abi: erc20Abi,
+          functionName: "approve",
+          args: [route.methodParameters.to as Address, rawAmount],
+        }),
+      }
+    : null;
+
+  const swap = {
+    target: route.methodParameters.to as Address,
+    data: route.methodParameters.calldata as Hex,
+    value: fromHex(route.methodParameters.value as Hex, "bigint"),
+  };
+
+  return approve ? [approve, swap] : swap;
+};
+
+/**
+ * This function will return a function for generating a quote.
+ *
+ * Generating a quote first fetches the trade route for the tokens,
+ * and then builds a user operation. Building a user operation will
+ * effectively simulate the execution.
+ *
+ * It will throw if there is not enough balance for gas or for the trade.
+ *
+ * TODO: the error is not user friendly AT ALL. clean that up and handle
+ * those cases better
+ */
+export const useQuoteRoute = ({ smartAccountClient }: UseQuoteRouteProps) => {
   const { chain } = useChain({});
   const bundlerClient = useBundlerClient();
 
@@ -35,7 +91,7 @@ export const useQuoteRoute = () => {
     });
   }, [bundlerClient, chain.id]);
 
-  const { mutate, isPending, mutateAsync, data } = useMutation({
+  const { mutate, isPending, mutateAsync, data, error } = useMutation({
     mutationKey: ["get-quote"],
     mutationFn: async ({
       recipient,
@@ -43,6 +99,8 @@ export const useQuoteRoute = () => {
       outToken,
       inTokenAmount,
     }: GetQuoteParams) => {
+      if (!smartAccountClient) return null;
+
       const routeOptions: SwapOptionsSwapRouter02 = {
         recipient,
         slippageTolerance: new Percent(50, 10_000),
@@ -50,17 +108,33 @@ export const useQuoteRoute = () => {
         type: SwapType.SWAP_ROUTER_02,
       };
 
-      const route = router.route(
-        CurrencyAmount.fromRawAmount(
-          inToken,
-          toHex(fromReadableAmount(inTokenAmount, inToken.decimals))
-        ),
+      const rawAmount = fromReadableAmount(inTokenAmount, inToken.decimals);
+      const route = await router.route(
+        CurrencyAmount.fromRawAmount(inToken, toHex(rawAmount)),
         outToken,
         TradeType.EXACT_INPUT,
         routeOptions
       );
 
-      return route;
+      if (!route) return null;
+
+      const toSend = buildUserOperationForRoute(route, inToken, inTokenAmount);
+
+      if (!toSend) return null;
+
+      // build a batch UO
+      // NOTE: if using a gas manager policy, this does result in a pending UO which costs towards the limit
+      const uo = await smartAccountClient.buildUserOperation({
+        uo: toSend,
+      });
+
+      return {
+        route,
+        uo,
+        sponsored:
+          "paymaster" in uo ||
+          ("paymasterAndData" in uo && uo.paymasterAndData !== "0x"),
+      };
     },
     retry: false,
   });
@@ -69,6 +143,7 @@ export const useQuoteRoute = () => {
     fetchQuote: mutate,
     fetchQuoteAsync: mutateAsync,
     quote: data,
+    quoteError: error,
     isFetchingQuote: isPending,
   };
 };

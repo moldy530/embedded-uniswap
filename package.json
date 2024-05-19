@@ -21,6 +21,7 @@
     "@tanstack/zod-form-adapter": "^0.13.3",
     "@uniswap/sdk-core": "^5.0.0",
     "@uniswap/smart-order-router": "^3.31.0",
+    "@uniswap/universal-router-sdk": "^2.0.5",
     "@uniswap/v3-sdk": "^3.11.2",
     "daisyui": "^4.11.1",
     "next": "14.1.0",

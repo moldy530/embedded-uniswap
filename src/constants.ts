@@ -1,6 +1,6 @@
 import { optimism, sepolia } from "@alchemy/aa-core";
 import {
-  USDC_OPTIMISM,
+  USDC_NATIVE_OPTIMISM,
   USDC_SEPOLIA,
   nativeOnChain,
 } from "@uniswap/smart-order-router";
@@ -16,14 +16,6 @@ export const getDefaultTokenForNetwork = (chain: Chain, dir?: "in" | "out") => {
 };
 
 export const popularTokens = {
-  [sepolia.id]: [
-    nativeOnChain(sepolia.id),
-    nativeOnChain(sepolia.id).wrapped,
-    USDC_SEPOLIA,
-  ],
-  [optimism.id]: [
-    nativeOnChain(sepolia.id),
-    nativeOnChain(sepolia.id).wrapped,
-    USDC_OPTIMISM,
-  ],
+  [sepolia.id]: [nativeOnChain(sepolia.id), USDC_SEPOLIA],
+  [optimism.id]: [nativeOnChain(optimism.id), USDC_NATIVE_OPTIMISM],
 };

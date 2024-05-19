@@ -19,8 +19,9 @@ export const clientEnv = createEnv({
    */
   runtimeEnv: {
     NEXT_PUBLIC_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_SEPOLIA_GAS_POLICY_ID: process.env.SEPOLIA_GAS_POLICY_ID,
+    NEXT_PUBLIC_SEPOLIA_GAS_POLICY_ID:
+      process.env.NEXT_PUBLIC_SEPOLIA_GAS_POLICY_ID,
     NEXT_PUBLIC_OPT_MAINNET_GAS_POLICY_ID:
-      process.env.OPT_MAINNET_GAS_POLICY_ID,
+      process.env.NEXT_PUBLIC_OPT_MAINNET_GAS_POLICY_ID,
   },
 });

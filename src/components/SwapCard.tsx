@@ -2,50 +2,32 @@
 
 import { gasPolicies } from "@/config/client";
 import { getDefaultTokenForNetwork } from "@/constants";
-import { useQuoteRoute } from "@/query/useQuoteRoute";
-import { useChain, useSmartAccountClient } from "@alchemy/aa-alchemy/react";
+import SwapArrows from "@/logos/swap-arrow";
+import { useBalance } from "@/query/useBalance";
+import {
+  buildUserOperationForRoute,
+  useQuoteRoute,
+} from "@/query/useQuoteRoute";
+import { fromReadableAmount } from "@/utils";
+import {
+  useChain,
+  useSendUserOperation,
+  useSmartAccountClient,
+} from "@alchemy/aa-alchemy/react";
+import { UserOperationStruct } from "@alchemy/aa-core";
 import { NativeCurrency, Token } from "@uniswap/sdk-core";
+import { nativeOnChain } from "@uniswap/smart-order-router";
 import { useEffect, useMemo, useState } from "react";
 import { ChainPicker } from "./ChainPicker";
-import { TokenPicker, TokenPickerProps } from "./TokenPicker";
+import { SwapField } from "./SwapField";
 
-const SwapField = ({
-  title,
-  defaultToken,
-  onTokenChange,
-  disabled,
-  onInputChange,
-  value,
-  loading,
-}: {
-  title: string;
-  onTokenChange: TokenPickerProps["onChange"];
-  onInputChange?: (amount: number) => void;
-  value?: number;
-  disabled?: boolean;
-  loading?: boolean;
-} & Omit<TokenPickerProps, "onChange">) => {
+const getGasCost = (uo: UserOperationStruct) => {
+  const { callGasLimit, preVerificationGas, verificationGasLimit } = uo;
+
   return (
-    <div className="flex flex-col w-full bg-base-200 rounded-lg p-4 gap-2">
-      <p className="text-sm text-slate-500">{title}</p>
-      <div className="flex flex-row justify-between gap-2 items-center">
-        <label className="daisy-input daisy-input-ghost flex items-center gap-2 active:bg-inherit focus:bg-inherit bg-inherit !text-[unset]">
-          <input
-            type="number"
-            className="w-full text-xl flex-1 active:bg-inherit focus:bg-inherit disabled:!text-[unset]"
-            placeholder="0"
-            disabled={disabled}
-            value={value === 0 ? "" : value}
-            onChange={(e) => onInputChange?.(Number(e.target.value))}
-          ></input>
-          {loading && (
-            <span className="daisy-loading daisy-loading-spinner daisy-loading-xs"></span>
-          )}
-        </label>
-
-        <TokenPicker defaultToken={defaultToken} onChange={onTokenChange} />
-      </div>
-    </div>
+    BigInt(callGasLimit ?? "0x0") +
+    BigInt(preVerificationGas ?? "0x0") +
+    BigInt(verificationGasLimit ?? "0x0")
   );
 };
 
@@ -65,6 +47,13 @@ export const SwapCard = () => {
     gasManagerConfig,
   });
 
+  const { isSendingUserOperation, sendUserOperation, sendUserOperationResult } =
+    useSendUserOperation({
+      client,
+      onError: console.error,
+      waitForTxn: true,
+    });
+
   const [inToken, setInToken] = useState<Token | NativeCurrency>(
     getDefaultTokenForNetwork(chain)
   );
@@ -76,7 +65,55 @@ export const SwapCard = () => {
   );
   const [outAmount, setOutAmount] = useState(0);
 
-  const { fetchQuoteAsync, isFetchingQuote } = useQuoteRoute();
+  const { fetchQuoteAsync, isFetchingQuote, quote, quoteError } = useQuoteRoute(
+    {
+      smartAccountClient: client,
+    }
+  );
+
+  const { balance, isLoadingBalance } = useBalance({
+    token: inToken,
+  });
+
+  const { balance: nativeBalance } = useBalance({
+    token: nativeOnChain(chain.id),
+  });
+
+  const canSubmit = useMemo(() => {
+    if (
+      isLoadingBalance ||
+      isFetchingQuote ||
+      !quote ||
+      !balance ||
+      !nativeBalance
+    ) {
+      return false;
+    }
+
+    // don't allow submissions if not enough balance
+    const rawInAmount = fromReadableAmount(inAmount, inToken.decimals);
+    if (balance.rawBalance < rawInAmount) {
+      return false;
+    }
+
+    const nativeCost =
+      getGasCost(quote.uo) + BigInt(inToken.isNative ? rawInAmount : 0);
+
+    if (!quote.sponsored && nativeBalance.rawBalance < nativeCost) {
+      return false;
+    }
+
+    return true;
+  }, [
+    balance,
+    inAmount,
+    inToken.decimals,
+    inToken.isNative,
+    isFetchingQuote,
+    isLoadingBalance,
+    nativeBalance,
+    quote,
+  ]);
 
   useEffect(() => {
     setInToken(getDefaultTokenForNetwork(chain));
@@ -101,7 +138,7 @@ export const SwapCard = () => {
       }).then((x) => {
         if (!x) return;
 
-        setOutAmount(Number(x.quote.toExact()));
+        setOutAmount(Number(x.route.quote.toExact()));
       });
     }, 500);
 
@@ -121,20 +158,71 @@ export const SwapCard = () => {
         <div className="flex flex-col gap-1 relative">
           <SwapField
             title="You pay"
-            defaultToken={getDefaultTokenForNetwork(chain)}
+            token={inToken}
             onTokenChange={setInToken}
             onInputChange={setInAmount}
-            value={inAmount}
           />
           <SwapField
             title="You receive"
-            defaultToken={getDefaultTokenForNetwork(chain, "out")}
+            token={outToken}
             onTokenChange={setOutToken}
             value={outAmount}
             disabled
             loading={isFetchingQuote}
           />
+          <button
+            className="daisy-btn daisy-btn-square absolute self-end top-[114px] right-[24px] border-white border-2"
+            onClick={() => {
+              setInToken(outToken);
+              setOutToken(inToken);
+            }}
+          >
+            <SwapArrows />
+          </button>
         </div>
+        {quoteError && (
+          <details className="daisy-collapse daisy-collapse-arrow rounded-lg bg-red-100 text-red-700 text-sm">
+            <summary className="daisy-collapse-title font-medium !flex !flex-row items-center">
+              Error getting quote
+            </summary>
+            <div className="daisy-collapse-content break-all">
+              <span>{quoteError.message}</span>
+            </div>
+          </details>
+        )}
+        {quote && (
+          <p className="text-sm text-slate-500">
+            Gas Cost: {quote.sponsored ? 0 : getGasCost(quote.uo).toString()}
+          </p>
+        )}
+        <button
+          className="daisy-btn w-full"
+          disabled={!canSubmit || isSendingUserOperation}
+          onClick={() => {
+            if (!quote) return;
+
+            const uo = buildUserOperationForRoute(
+              quote.route,
+              inToken,
+              inAmount
+            );
+            if (!uo) return;
+
+            sendUserOperation({
+              uo,
+            });
+          }}
+        >
+          {isSendingUserOperation && (
+            <span className="daisy-loading daisy-loading-spinner daisy-loading-xs"></span>
+          )}
+          Swap
+        </button>
+        {sendUserOperationResult && (
+          <p className="text-sm text-slate-500">
+            tx: {sendUserOperationResult.hash}
+          </p>
+        )}
       </div>
     </div>
   );

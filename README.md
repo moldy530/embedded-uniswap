@@ -1,6 +1,11 @@
-This is an example of an Alchemy Embedded Account using an Alchemy Signer to enable secure auth and transaction flows using ERC-4337 smart accounts! Learn more in our [docs](https://accountkit.alchemy.com/signers/alchemy-signer.html).
+# Uniswap AA Demo
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This app uses the Alchemy's AA stack and Uniswap v3 SDK to demo swapping of tokens using a Smart Contract Account. Right now, it is configured with Optimism Mainnet and ETH Sepolia for testnet. Routing is done using the SwapRouter to leverage multiple pools for doing swaps.
+
+### Known Issues
+
+- Swapping from ETH <-> WETH throws an error. This seems to be happening within the Uniswap SDK because at some point the generated route contains a swap from WETH -> WETH, which causes an invariant violation. To fix this, I think a good approach is to branch the logic for swaps when going from native token to its wrapped version. The Uniswap SDK contains definitions for which contract is the wrapped token so we can catch this early on. When we see this to happen, we can create our own route for the trade that just uses a singe pool route for ETH <-> WETH. The process for this is outlined [here](https://docs.uniswap.org/sdk/v3/guides/swaps/quoting#computing-the-pools-deployment-address).
+- Completing a swap successfully on one chain and then switching chains results in failed UO simulation due to `Account not deployed` errors. This is a bug in the `aa-sdk` introduced when multiple chain configs were added to the `AccountContext`. The root cause is that the config for an account is cached in `Storage` so that refreshes can optimistcally render account info. This is not synced with the `chain` state at the moment and is not being correctly re-generated on chain changes.
 
 ## Setup
 

@@ -3,7 +3,7 @@ import { SwapCard } from "@/components/SwapCard";
 import { useUser } from "@alchemy/aa-alchemy/react";
 import { redirect } from "next/navigation";
 
-export function Swap() {
+function Swap() {
   const user = useUser();
   if (!user) {
     redirect("/");

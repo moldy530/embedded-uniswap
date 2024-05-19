@@ -8,17 +8,23 @@ Create your own `.env` file by copying the `.sample.env` file.
 
 To use the Alchemy Signer in this demo, you will need to:
 
-1. Create an Alchemy App and get your API Key. Go to the [Alchemy Dashboard](https://dashboard.alchemy.com/signup/?a=aa-docs). Create a new app on Ethereum Sepolia. Access your credentials for this app then paste the API KEY and the RPC URL in to the `.env` file.
+1. Create an Alchemy App and get your API Key. Go to the [Alchemy Dashboard](https://dashboard.alchemy.com/signup/?a=aa-docs). Create a new app on Ethereum Sepolia. Access your credentials for this app then paste the API KEY in to the `.env` file.
+
+- If you want to test on Optimism Mainnet, create an App for Optimism as well
 
 <img src="/images/alchemy-dashboard.png" width="auto" height="auto" alt="Account Kit Overview" style="display: block; margin: auto;">
 
 2. Create a new account config in your [Alchemy Accounts Manager Dashbord](https://dashboard.alchemy.com/accounts). Make sure to set the redirect url to http://localhost:3000 for testing this demo and connect this to the app you made in step 1.
+
+- If you created an Optimism app as well, then add it to the account config during setup
 
 <img src="/images/alchemy-accounts-dashboard.png" width="auto" height="auto" alt="Create new embedded account config" style="display: block; margin: auto;">
 
 The account config allows you to customize the signup and login authentication email that will be sent to users when logging in to your dapp. Apply the config to the app your created in the step above.
 
 <img src="/images/create-account-config.png" width="auto" height="auto" alt="Account Kit Overview" style="display: block; margin: auto;">
+
+3. (Optional) Create a Gas Policy for either or both chains in the [Gas Manager](https://dashboard.alchemy.com/gas-manager). Mainnets require a paid subscription, but testnets are free.
 
 ## Getting Started
 

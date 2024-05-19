@@ -1,9 +1,10 @@
 import { popularTokens } from "@/constants";
 import { useBalance } from "@/query/useBalance";
 import { useTokenHoldings } from "@/query/useTokenBalances";
+import { useTokenMetadata } from "@/query/useTokenMetadata";
 import { useAccount, useChain } from "@alchemy/aa-alchemy/react";
 import { NativeCurrency, Token } from "@uniswap/sdk-core";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export const SwapField = ({
   title,
@@ -38,7 +39,12 @@ export const SwapField = ({
     token,
   });
 
+  const [searchToken, setSearchToken] = useState<string>("");
+
   const { tokens } = useTokenHoldings({ account });
+  const { tokenMetadata, isLoadingTokenMetadata } = useTokenMetadata({
+    address: searchToken,
+  });
 
   return (
     <div className="flex flex-col w-full bg-base-200 rounded-lg p-4 gap-2">
@@ -72,6 +78,33 @@ export const SwapField = ({
           >
             <ul className="p-4 shadow daisy-menu daisy-dropdown-content z-[1] bg-base-100 rounded-box w-52 gap-3">
               {/* TODO: add the ability to search for a token */}
+              <input
+                className="daisy-input daisy-input-bordered daisy-input-sm w-full"
+                placeholder="Enter a token address"
+                value={searchToken}
+                onChange={(e) => setSearchToken(e.target.value)}
+              ></input>
+              {isLoadingTokenMetadata ? (
+                <span className="daisy-loading daisy-loading-spinner daisy-loading-xs"></span>
+              ) : tokenMetadata ? (
+                <li>
+                  <a
+                    onClick={() =>
+                      updateToken(
+                        new Token(
+                          chain.id,
+                          searchToken,
+                          tokenMetadata.decimals ?? 18,
+                          tokenMetadata.symbol ?? undefined,
+                          tokenMetadata.name ?? undefined
+                        )
+                      )
+                    }
+                  >
+                    {tokenMetadata.symbol}
+                  </a>
+                </li>
+              ) : null}
               <div>
                 <h3>Your Tokens</h3>
                 {tokens?.map((t) => (
@@ -82,7 +115,7 @@ export const SwapField = ({
                           new Token(
                             chain.id,
                             t.contractAddress,
-                            t.decimals ?? 0,
+                            t.decimals ?? 18,
                             t.symbol,
                             t.name
                           )

@@ -18,6 +18,7 @@ type UseTokenHoldingsProps = {
 export const useTokenHoldings = ({ account }: UseTokenHoldingsProps) => {
   const { chain } = useChain({});
   const bundlerClient = useBundlerClient();
+  // TODO: we should create a singleton of this by chain or have it live in a context somewhere
   const alchemySdk = useMemo(
     () =>
       new Alchemy({
@@ -35,7 +36,6 @@ export const useTokenHoldings = ({ account }: UseTokenHoldingsProps) => {
     queryFn: async () => {
       if (!account) return null;
       const tokens = await alchemySdk.core.getTokensForOwner(account?.address);
-
       return tokens.tokens;
     },
   });

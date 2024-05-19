@@ -13,12 +13,7 @@ import {
   Token,
   TradeType,
 } from "@uniswap/sdk-core";
-import {
-  AlphaRouter,
-  SwapOptionsSwapRouter02,
-  SwapRoute,
-  SwapType,
-} from "@uniswap/smart-order-router";
+import { AlphaRouter, SwapRoute, SwapType } from "@uniswap/smart-order-router";
 import { useMemo } from "react";
 import {
   Address,
@@ -101,11 +96,11 @@ export const useQuoteRoute = ({ smartAccountClient }: UseQuoteRouteProps) => {
     }: GetQuoteParams) => {
       if (!smartAccountClient) return null;
 
-      const routeOptions: SwapOptionsSwapRouter02 = {
+      const routeOptions = {
         recipient,
         slippageTolerance: new Percent(50, 10_000),
         deadline: Math.floor(Date.now() / 1000 + 1800),
-        type: SwapType.SWAP_ROUTER_02,
+        type: SwapType.UNIVERSAL_ROUTER,
       };
 
       const rawAmount = fromReadableAmount(inTokenAmount, inToken.decimals);
@@ -124,9 +119,11 @@ export const useQuoteRoute = ({ smartAccountClient }: UseQuoteRouteProps) => {
 
       // build a batch UO
       // NOTE: if using a gas manager policy, this does result in a pending UO which costs towards the limit
-      const uo = await smartAccountClient.buildUserOperation({
-        uo: toSend,
-      });
+      const uo = await smartAccountClient
+        .buildUserOperation({
+          uo: toSend,
+        })
+        .catch((err) => new Error("Failed to build UO", { cause: err }));
 
       return {
         route,

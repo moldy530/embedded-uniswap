@@ -96,6 +96,10 @@ export const SwapCard = () => {
       return false;
     }
 
+    if (quote.uo instanceof Error) {
+      return false;
+    }
+
     const nativeCost =
       getGasCost(quote.uo) + BigInt(inToken.isNative ? rawInAmount : 0);
 
@@ -180,17 +184,21 @@ export const SwapCard = () => {
             <SwapArrows />
           </button>
         </div>
-        {quoteError && (
+        {(quoteError || quote?.uo instanceof Error) && (
           <details className="daisy-collapse daisy-collapse-arrow rounded-lg bg-red-100 text-red-700 text-sm">
             <summary className="daisy-collapse-title font-medium !flex !flex-row items-center">
-              Error getting quote
+              {quoteError ? "Error getting quote" : "Error in simulating UO"}
             </summary>
             <div className="daisy-collapse-content break-all">
-              <span>{quoteError.message}</span>
+              <span>
+                {quoteError?.message ??
+                  // @ts-ignore
+                  (quote?.uo as Error | undefined)?.cause?.message}
+              </span>
             </div>
           </details>
         )}
-        {quote && (
+        {quote && !(quote.uo instanceof Error) && (
           <p className="text-sm text-slate-500">
             Gas Cost: {quote.sponsored ? 0 : getGasCost(quote.uo).toString()}
           </p>

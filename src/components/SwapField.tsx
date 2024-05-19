@@ -106,6 +106,14 @@ export const SwapField = ({
                 </li>
               ) : null}
               <div>
+                <h3>Popular Tokens</h3>
+                {popularTokens[chain.id].map((token) => (
+                  <li key={token.symbol}>
+                    <a onClick={() => updateToken(token)}>{token.symbol}</a>
+                  </li>
+                ))}
+              </div>
+              <div>
                 <h3>Your Tokens</h3>
                 {tokens?.map((t) => (
                   <li key={t.symbol}>
@@ -124,14 +132,6 @@ export const SwapField = ({
                     >
                       {t.symbol} ({t.balance ?? "0"})
                     </a>
-                  </li>
-                ))}
-              </div>
-              <div>
-                <h3>Popular Tokens</h3>
-                {popularTokens[chain.id].map((token) => (
-                  <li key={token.symbol}>
-                    <a onClick={() => updateToken(token)}>{token.symbol}</a>
                   </li>
                 ))}
               </div>

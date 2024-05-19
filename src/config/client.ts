@@ -15,7 +15,7 @@ export const gasPolicies = {
 
 export const config = createConfig({
   // required
-  chain: sepolia,
+  chain: optimism,
   connections: [
     {
       chain: sepolia,

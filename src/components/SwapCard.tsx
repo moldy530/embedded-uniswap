@@ -153,7 +153,7 @@ export const SwapCard = () => {
             <h2 className="daisy-card-title">Swap</h2>
             <ChainPicker />
           </div>
-          <div>{address ? `Address: ${address}` : ""}</div>
+          <div>{address ? `Account Address: ${address}` : ""}</div>
         </div>
         <div className="flex flex-col gap-1 relative">
           <SwapField

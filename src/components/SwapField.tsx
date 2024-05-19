@@ -71,6 +71,7 @@ export const SwapField = ({
             className="flex flex-col gap-2 daisy-dropdown-content daisy-card daisy-card-compact z-10"
           >
             <ul className="p-4 shadow daisy-menu daisy-dropdown-content z-[1] bg-base-100 rounded-box w-52 gap-3">
+              {/* TODO: add the ability to search for a token */}
               <div>
                 <h3>Your Tokens</h3>
                 {tokens?.map((t) => (

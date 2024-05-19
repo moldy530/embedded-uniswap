@@ -1065,7 +1065,7 @@
   resolved "https://registry.yarnpkg.com/@uniswap/lib/-/lib-4.0.1-alpha.tgz#2881008e55f075344675b3bca93f020b028fbd02"
   integrity sha512-f6UIliwBbRsgVLxIaBANF6w09tYqc6Y/qXdsrbEmXHyFA7ILiKrIwRFXe1yOg8M3cksgVsO9N7yuL2DdCGQKBA==
 
-"@uniswap/permit2-sdk@^1.2.0", "@uniswap/permit2-sdk@^1.2.1":
+"@uniswap/permit2-sdk@^1.2.0":
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@uniswap/permit2-sdk/-/permit2-sdk-1.2.1.tgz#7f562d96a26de0538508ba9ea2b2f02150572bf2"
   integrity sha512-3eEVW6d1tepF9L4XLGhrGoVPKFBe/kQYRCvkzMmYu32amEeV2L8sg5TBJhrVZu+cu0srX7rh3nhOucNdMVOGzg==
@@ -1073,7 +1073,7 @@
     ethers "^5.7.0"
     tiny-invariant "^1.1.0"
 
-"@uniswap/router-sdk@^1.9.0", "@uniswap/router-sdk@^1.9.2":
+"@uniswap/router-sdk@^1.9.0":
   version "1.9.2"
   resolved "https://registry.yarnpkg.com/@uniswap/router-sdk/-/router-sdk-1.9.2.tgz#cc2411f0849467c2bd71ce34cdca9db2a584367d"
   integrity sha512-J63Of3HRpV0s3ZtEnhGlyvbBuZFfjK7NtnMwflzFMKzfdm+75APHYqnvHAnVARKuL/hMYHF4hni0o84bHem2Ng==
@@ -1169,20 +1169,6 @@
     "@uniswap/v3-sdk" "^3.11.0"
     bignumber.js "^9.0.2"
     ethers "^5.3.1"
-
-"@uniswap/universal-router-sdk@^2.0.5":
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/@uniswap/universal-router-sdk/-/universal-router-sdk-2.0.5.tgz#6f9be9fd95cddc0d8b96cb8a1326fa1f7b3b4068"
-  integrity sha512-Z/ckzJVD7SW+zb1D2LCnSpGIZBf9nJ1jrj2KqLn9f23RPwmlgBMTADt1tSYG9GVIKej8L6WQ2v/7npM/ZqDKtg==
-  dependencies:
-    "@uniswap/permit2-sdk" "^1.2.1"
-    "@uniswap/router-sdk" "^1.9.2"
-    "@uniswap/sdk-core" "^5.0.0"
-    "@uniswap/universal-router" "1.6.0"
-    "@uniswap/v2-sdk" "^4.3.2"
-    "@uniswap/v3-sdk" "^3.11.2"
-    bignumber.js "^9.0.2"
-    ethers "^5.7.0"
 
 "@uniswap/universal-router@1.6.0", "@uniswap/universal-router@^1.6.0":
   version "1.6.0"

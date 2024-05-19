@@ -36,7 +36,6 @@ export const config = createConfig({
 export const uiConfig: AlchemyAccountsProviderProps["uiConfig"] = {
   auth: {
     sections: [[{ type: "email" }], [{ type: "passkey" }]],
-    addPasskeyOnSignup: true,
   },
 };
 

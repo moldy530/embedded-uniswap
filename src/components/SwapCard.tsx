@@ -2,27 +2,10 @@
 
 import { gasPolicies } from "@/config/client";
 import { getDefaultTokenForNetwork } from "@/constants";
-import { fromReadableAmount } from "@/utils";
-import {
-  useBundlerClient,
-  useChain,
-  useSmartAccountClient,
-} from "@alchemy/aa-alchemy/react";
-import { Web3Provider } from "@ethersproject/providers";
-import {
-  CurrencyAmount,
-  NativeCurrency,
-  Percent,
-  Token,
-  TradeType,
-} from "@uniswap/sdk-core";
-import {
-  AlphaRouter,
-  SwapOptionsSwapRouter02,
-  SwapType,
-} from "@uniswap/smart-order-router";
+import { useQuoteRoute } from "@/query/useQuoteRoute";
+import { useChain, useSmartAccountClient } from "@alchemy/aa-alchemy/react";
+import { NativeCurrency, Token } from "@uniswap/sdk-core";
 import { useEffect, useMemo, useState } from "react";
-import { toHex } from "viem";
 import { ChainPicker } from "./ChainPicker";
 import { TokenPicker, TokenPickerProps } from "./TokenPicker";
 
@@ -33,25 +16,33 @@ const SwapField = ({
   disabled,
   onInputChange,
   value,
+  loading,
 }: {
   title: string;
   onTokenChange: TokenPickerProps["onChange"];
   onInputChange?: (amount: number) => void;
   value?: number;
   disabled?: boolean;
+  loading?: boolean;
 } & Omit<TokenPickerProps, "onChange">) => {
   return (
     <div className="flex flex-col w-full bg-base-200 rounded-lg p-4 gap-2">
       <p className="text-sm text-slate-500">{title}</p>
       <div className="flex flex-row justify-between gap-2 items-center">
-        <input
-          type="number"
-          className="daisy-input daisy-input-ghost w-full text-xl flex-1 active:bg-inherit focus:bg-inherit disabled:text-[var(--fallback-bc)]"
-          placeholder="0"
-          disabled={disabled}
-          value={value === 0 ? "" : value}
-          onChange={(e) => onInputChange?.(Number(e.target.value))}
-        ></input>
+        <label className="daisy-input daisy-input-ghost flex items-center gap-2 active:bg-inherit focus:bg-inherit bg-inherit !text-[unset]">
+          <input
+            type="number"
+            className="w-full text-xl flex-1 active:bg-inherit focus:bg-inherit disabled:!text-[unset]"
+            placeholder="0"
+            disabled={disabled}
+            value={value === 0 ? "" : value}
+            onChange={(e) => onInputChange?.(Number(e.target.value))}
+          ></input>
+          {loading && (
+            <span className="daisy-loading daisy-loading-spinner daisy-loading-xs"></span>
+          )}
+        </label>
+
         <TokenPicker defaultToken={defaultToken} onChange={onTokenChange} />
       </div>
     </div>
@@ -69,7 +60,6 @@ export const SwapCard = () => {
     };
   }, [chain.id]);
 
-  const bundlerClient = useBundlerClient();
   const { client, address } = useSmartAccountClient({
     type: "LightAccount",
     gasManagerConfig,
@@ -86,12 +76,7 @@ export const SwapCard = () => {
   );
   const [outAmount, setOutAmount] = useState(0);
 
-  const router = useMemo(() => {
-    return new AlphaRouter({
-      chainId: chain.id,
-      provider: new Web3Provider(bundlerClient),
-    });
-  }, [bundlerClient, chain.id]);
+  const { fetchQuoteAsync, isFetchingQuote } = useQuoteRoute();
 
   useEffect(() => {
     setInToken(getDefaultTokenForNetwork(chain));
@@ -99,32 +84,29 @@ export const SwapCard = () => {
   }, [chain]);
 
   useEffect(() => {
-    // TODO: need to debounce this
-    if (!router || !address || inAmount === 0) return;
+    if (inAmount === 0) {
+      setOutAmount(0);
+      return;
+    }
 
-    const routeOptions: SwapOptionsSwapRouter02 = {
-      recipient: address,
-      slippageTolerance: new Percent(50, 10_000),
-      deadline: Math.floor(Date.now() / 1000 + 1800),
-      type: SwapType.SWAP_ROUTER_02,
-    };
+    if (!address) return;
 
-    const route = router.route(
-      CurrencyAmount.fromRawAmount(
+    // debounces the input
+    const timeout = setTimeout(() => {
+      fetchQuoteAsync({
         inToken,
-        toHex(fromReadableAmount(inAmount, inToken.decimals))
-      ),
-      outToken,
-      TradeType.EXACT_INPUT,
-      routeOptions
-    );
+        outToken,
+        recipient: address,
+        inTokenAmount: inAmount,
+      }).then((x) => {
+        if (!x) return;
 
-    route.catch(console.error).then((x) => {
-      if (!x) return;
+        setOutAmount(Number(x.quote.toExact()));
+      });
+    }, 500);
 
-      setOutAmount(Number(x.quote.toSignificant()));
-    });
-  }, [address, inAmount, inToken, outToken, router]);
+    return () => clearTimeout(timeout);
+  }, [address, fetchQuoteAsync, inAmount, inToken, outToken]);
 
   return (
     <div className="daisy-card bg-base-100 shadow-xl w-[500px] max-w-[500px]">
@@ -150,6 +132,7 @@ export const SwapCard = () => {
             onTokenChange={setOutToken}
             value={outAmount}
             disabled
+            loading={isFetchingQuote}
           />
         </div>
       </div>

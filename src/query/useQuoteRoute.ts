@@ -100,7 +100,7 @@ export const useQuoteRoute = ({ smartAccountClient }: UseQuoteRouteProps) => {
         recipient,
         slippageTolerance: new Percent(50, 10_000),
         deadline: Math.floor(Date.now() / 1000 + 1800),
-        type: SwapType.UNIVERSAL_ROUTER,
+        type: SwapType.SWAP_ROUTER_02,
       };
 
       const rawAmount = fromReadableAmount(inTokenAmount, inToken.decimals);
